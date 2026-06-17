@@ -4,12 +4,16 @@ from database import *
 
 create_table()
 
+# ---------------- PAGE CONFIG ----------------
 
 st.set_page_config(
     page_title="FreshTrack",
     page_icon="🥗",
     layout="wide"
 )
+
+# ---------------- STYLE ----------------
+
 st.markdown("""
 <style>
 .stApp {
@@ -28,21 +32,6 @@ st.markdown("""
     color: #FF6F00;
     text-align: center;
 }
-
-.food-card {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
-    border-left: 8px solid #4CAF50;
-}
-
-.metric-box {
-    background-color: #FFF3E0;
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -55,7 +44,8 @@ st.markdown(
     '<p class="subtitle">AI Smart Food Waste Reduction System</p>',
     unsafe_allow_html=True
 )
-from datetime import date, datetime
+
+# ---------------- DASHBOARD ----------------
 
 def show_dashboard(username):
 
@@ -63,34 +53,35 @@ def show_dashboard(username):
         st.session_state.logged_in = False
         st.rerun()
 
-    st.header(f"Welcome {username} 👋")
+    st.header(f"🍎 Welcome {username}")
 
     mode = st.sidebar.radio(
         "Select Mode",
-        ["Add Food", "Dashboard"]
+        [
+            "🏠 Home",
+            "➕ Add Food",
+            "📊 Dashboard",
+            "🤖 AI Prediction",
+            "⚠ Expiry Alerts",
+            "🍲 Recipe Suggestions",
+            "📈 Analytics",
+            "🌍 Sustainability"
+        ]
     )
 
-    if mode == "Add Food":
+    # HOME
+
+    if mode == "🏠 Home":
+
+        st.success(
+            "Welcome to FreshTrack AI Food Waste Reduction System"
+        )
+
+    # ADD FOOD
+
+    elif mode == "➕ Add Food":
 
         food = st.text_input("Food Name")
-
-        category = st.selectbox(
-            "Category",
-            ["Dairy","Fruit","Vegetable",
-             "Meat","Protein","Bakery"]
-        )
-
-        temperature = st.number_input(
-            "Temperature (°C)",
-            0, 50, 25
-        )
-
-        humidity = st.number_input(
-            "Humidity (%)",
-            0, 100, 50
-        )
-
-        quantity = st.text_input("Quantity")
 
         added_date = st.date_input(
             "Added Date"
@@ -100,58 +91,58 @@ def show_dashboard(username):
             "Expiry Date"
         )
 
-        if st.button("Add Food"):
+        if st.button("Save Food"):
 
-            score = 100
+            days_left = (
+                expiry_date - added_date
+            ).days
 
-            if temperature > 25:
-                score -= 20
-
-            if humidity > 70:
-                score -= 10
-
-            score = max(0, score)
-
-            if score >= 70:
-                status = "Fresh"
-            elif score >= 40:
-                status = "Expiring"
-            else:
-                status = "Spoiled"
-
-            df = pd.read_csv("projcsv.csv")
+            try:
+                df = pd.read_csv(
+                    "user_foods.csv"
+                )
+            except:
+                df = pd.DataFrame(
+                    columns=[
+                        "Food_Name",
+                        "Time_To_Expiry"
+                    ]
+                )
 
             new_row = {
                 "Food_Name": food,
-                "Category": category,
-                "Temperature": temperature,
-                "Humidity": humidity,
-                "Quantity": quantity,
-                "Purchase_Date": str(added_date),
-                "Expiry_Date": str(expiry_date),
-                "Freshness_Score": score,
-                "Status": status
+                "Time_To_Expiry": days_left
             }
 
             df.loc[len(df)] = new_row
 
             df.to_csv(
-                "projcsv.csv",
+                "user_foods.csv",
                 index=False
             )
 
             st.success(
-                "Food Added Successfully!"
+                "Food Added Successfully"
             )
 
-    else:
+    # DASHBOARD
 
-        df = pd.read_csv(
-            "projcsv.csv"
-        )
+    elif mode == "📊 Dashboard":
+
+        try:
+            df = pd.read_csv(
+                "user_foods.csv"
+            )
+        except:
+            df = pd.DataFrame(
+                columns=[
+                    "Food_Name",
+                    "Time_To_Expiry"
+                ]
+            )
 
         st.subheader(
-            "📊 Stored Food Data"
+            "📊 User Added Foods"
         )
 
         st.dataframe(
@@ -159,14 +150,199 @@ def show_dashboard(username):
             use_container_width=True
         )
 
+    # AI PREDICTION
+
+    elif mode == "🤖 AI Prediction":
+
+        try:
+            df = pd.read_csv(
+                "user_foods.csv"
+            )
+        except:
+            df = pd.DataFrame(
+                columns=[
+                    "Food_Name",
+                    "Time_To_Expiry"
+                ]
+            )
+
+        if len(df) > 0:
+
+            food = st.selectbox(
+                "Select Food",
+                df["Food_Name"]
+            )
+
+            days_left = int(
+                df[df["Food_Name"] == food]
+                ["Time_To_Expiry"]
+                .values[0]
+            )
+
+            score = min(
+                100,
+                int((days_left / 30) * 100)
+            )
+
+            st.progress(
+                score / 100
+            )
+
+            st.metric(
+                "Freshness Score",
+                f"{score}%"
+            )
+
+            if score >= 70:
+                st.success(
+                    "Food is Fresh ✅"
+                )
+
+            elif score >= 40:
+                st.warning(
+                    "Consume Soon ⚠️"
+                )
+
+            else:
+                st.error(
+                    "Food Spoiled ❌"
+                )
+
+    # EXPIRY ALERTS
+
+        # EXPIRY ALERTS
+
+        # EXPIRY ALERTS
+
+    elif mode == "⚠ Expiry Alerts":
+
+        st.subheader("📱 FreshTrack Expiry Notification Center")
+
+        try:
+            df = pd.read_csv("user_foods.csv")
+        except:
+            df = pd.DataFrame(
+                columns=["Food_Name", "Time_To_Expiry"]
+            )
+
+        alerts_found = False
+
+        for _, row in df.iterrows():
+
+            if row["Time_To_Expiry"] <= 1:
+
+                alerts_found = True
+
+                st.error(
+                    f"🚨 ALERT: {row['Food_Name']} expires tomorrow!"
+                )
+
+            elif row["Time_To_Expiry"] <= 3:
+
+                alerts_found = True
+
+                st.warning(
+                    f"⚠ {row['Food_Name']} expires in {row['Time_To_Expiry']} days."
+                )
+
+        if not alerts_found:
+
+            st.success(
+                "✅ No foods are close to expiry."
+            )
+
+    # RECIPE
+
+    elif mode == "🍲 Recipe Suggestions":
+
+        food = st.text_input(
+            "Enter Food Name"
+        )
+
+        recipes = {
+            "Milk": "Milkshake",
+            "Apple": "Apple Pie",
+            "Banana": "Banana Smoothie",
+            "Egg": "Omelette",
+            "Bread": "Sandwich"
+        }
+
+        if food in recipes:
+
+            st.success(
+                recipes[food]
+            )
+
+    # ANALYTICS
+
+    elif mode == "📈 Analytics":
+
+        try:
+            df = pd.read_csv(
+                "user_foods.csv"
+            )
+        except:
+            df = pd.DataFrame(
+                columns=[
+                    "Food_Name",
+                    "Time_To_Expiry"
+                ]
+            )
+
+        if len(df) > 0:
+
+            st.bar_chart(
+                df.set_index(
+                    "Food_Name"
+                )["Time_To_Expiry"]
+            )
+
+    # SUSTAINABILITY
+
+    elif mode == "🌍 Sustainability":
+
+        try:
+            df = pd.read_csv(
+                "user_foods.csv"
+            )
+        except:
+            df = pd.DataFrame(
+                columns=[
+                    "Food_Name",
+                    "Time_To_Expiry"
+                ]
+            )
+
+        foods_saved = len(df)
+
+        money_saved = foods_saved * 50
+
+        co2_saved = foods_saved * 0.5
+
+        c1, c2, c3 = st.columns(3)
+
+        c1.metric(
+            "Foods Saved",
+            foods_saved
+        )
+
+        c2.metric(
+            "Money Saved",
+            f"₹{money_saved}"
+        )
+
+        c3.metric(
+            "CO₂ Reduced",
+            f"{co2_saved} kg"
+        )
+# ---------------- LOGIN REGISTER ----------------
+
 menu = ["Login", "Register"]
 
 choice = st.sidebar.selectbox(
     "Menu",
     menu
 )
-
-# ---------------- REGISTER ----------------
 
 if choice == "Register":
 
@@ -191,16 +367,14 @@ if choice == "Register":
         if success:
 
             st.success(
-                "Account created successfully!"
+                "Account created successfully"
             )
 
         else:
 
             st.error(
-                "Username already exists!"
+                "Username already exists"
             )
-
-# ---------------- LOGIN ----------------
 
 else:
 
@@ -234,7 +408,7 @@ else:
             st.session_state.username = username
 
             st.success(
-                f"Welcome {username}!"
+                f"Welcome {username}"
             )
 
             st.balloons()
@@ -242,10 +416,11 @@ else:
         else:
 
             st.error(
-                "Invalid username or password."
+                "Invalid username or password"
             )
 
     if st.session_state.logged_in:
+
         show_dashboard(
             st.session_state.username
         )
