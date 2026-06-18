@@ -390,10 +390,13 @@ def show_dashboard(username):
         st.write("FreshTrack Points:", len(df) * 10)
 
 # MAIN APP
+# MAIN APP
 if st.session_state.logged_in:
     show_dashboard(st.session_state.username)
 else:
     choice = st.sidebar.selectbox("Menu", ["Login", "Register"])
+
+    st.markdown("### ")
 
     if choice == "Register":
         st.markdown("""
@@ -409,19 +412,21 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        new_user = st.text_input("Username")
-        new_password = st.text_input("Password", type="password")
+        with st.form("register_form"):
+            new_user = st.text_input("Username")
+            new_password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Register")
 
-        if st.button("Register"):
-            if add_user(new_user, new_password):
-                st.success("Account Created")
-                st.session_state.logged_in = True
-                st.session_state.username = new_user
-                st.rerun()
-            else:
-                st.error("Username Already Exists")
+            if submitted:
+                if add_user(new_user, new_password):
+                    st.success("Account Created")
+                    st.session_state.logged_in = True
+                    st.session_state.username = new_user
+                    st.rerun()
+                else:
+                    st.error("Username Already Exists")
 
-    else:  # Login
+    else:
         st.markdown("""
         <div style="
         background:white;
@@ -435,15 +440,16 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
 
-        if st.button("Login"):
-            ok = login_user(username, password)
-
-            if ok:
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.rerun()
-            else:
-                st.error("Invalid Username or Password")
+            if submitted:
+                ok = login_user(username, password)
+                if ok:
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.rerun()
+                else:
+                    st.error("Invalid Username or Password")
