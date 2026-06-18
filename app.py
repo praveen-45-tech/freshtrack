@@ -1,6 +1,13 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import os
+
+try:
+    import plotly.express as px
+except ModuleNotFoundError:
+    px = None
+
+st.write("DEBUG users.db path =", os.path.abspath("users.db"))
 from database import *
 
 create_table()
@@ -21,7 +28,6 @@ if "username" not in st.session_state:
 if "active_menu" not in st.session_state:
     st.session_state.active_menu = "🏠 Home"
 
-
 # PAGE HEADER
 st.markdown("""
 <div style="text-align:center; padding:20px;">
@@ -31,34 +37,21 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-
 # STYLE
 st.markdown("""
 <style>
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 * { font-family: 'Poppins', sans-serif !important; }
-
-/* Main Background */
-.stApp{
-    background: linear-gradient(135deg, #F4FFF4, #E8F5E9) !important;
-}
-
-/* Sidebar Background */
+.stApp{ background: linear-gradient(135deg, #F4FFF4, #E8F5E9) !important; }
 [data-testid="stSidebar"]{
     background: linear-gradient(180deg, #1B5E20 0%, #2E7D32 50%, #1B5E20 100%) !important;
     border-right: none !important;
     box-shadow: 4px 0px 20px rgba(0,0,0,0.25) !important;
 }
-
-/* Sidebar text */
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,
-[data-testid="stSidebar"] label {
-    color: white !important;
-}
+[data-testid="stSidebar"] label { color: white !important; }
 
-/* User card */
 .user-card{
     background: rgba(255,255,255,0.15);
     backdrop-filter: blur(10px);
@@ -70,7 +63,6 @@ st.markdown("""
     text-align: center;
 }
 
-/* Menu section title */
 .menu-section-title{
     color: rgba(255,255,255,0.65) !important;
     font-size: 11px !important;
@@ -81,7 +73,6 @@ st.markdown("""
     padding-left: 8px !important;
 }
 
-/* Divider */
 .menu-divider{
     height: 1px;
     background: rgba(255,255,255,0.15);
@@ -89,7 +80,6 @@ st.markdown("""
     border-radius: 5px;
 }
 
-/* Make Streamlit buttons look like app menu items */
 .stButton button{
     width: 100%;
     border-radius: 16px !important;
@@ -111,7 +101,6 @@ st.markdown("""
     transform: translateX(5px);
 }
 
-/* Active menu button (for "coming" feel) */
 .active-menu button{
     background: linear-gradient(135deg, rgba(255,255,255,0.30), rgba(255,255,255,0.10)) !important;
     border: 1px solid rgba(255,255,255,0.35) !important;
@@ -121,7 +110,6 @@ st.markdown("""
     transform: translateX(5px);
 }
 
-/* Logout button */
 .logout-btn button{
     background: linear-gradient(135deg, #FF5252, #D32F2F) !important;
     color: white !important;
@@ -135,7 +123,6 @@ st.markdown("""
     transform: scale(1.01);
 }
 
-/* Banner card */
 .banner{
     background: linear-gradient(135deg, #00C853, #64DD17);
     padding: 35px;
@@ -145,38 +132,22 @@ st.markdown("""
     margin-bottom: 20px;
 }
 
-/* Inputs */
 .stTextInput input,
-.stSelectbox select{
-    border-radius: 15px !important;
-    border: 2px solid #E8F5E9 !important;
-}
-
-/* Dataframe */
-[data-testid="stDataFrame"]{
-    border-radius: 15px !important;
-}
-
-/* Buttons in body */
-.stButton button:focus{
-    box-shadow: none !important;
-}
-
+.stSelectbox select{ border-radius: 15px !important; border: 2px solid #E8F5E9 !important; }
+[data-testid="stDataFrame"]{ border-radius: 15px !important; }
+.stButton button:focus{ box-shadow: none !important; }
 </style>
 """, unsafe_allow_html=True)
-
 
 # DATA
 def load_data():
     try:
         return pd.read_csv("user_foods.csv")
-    except:
+    except Exception:
         return pd.DataFrame(columns=["Food_Name", "Category", "Time_To_Expiry"])
-
 
 def save_data(df):
     df.to_csv("user_foods.csv", index=False)
-
 
 # SIDEBAR MENU
 def render_sidebar_menu(username: str):
@@ -200,7 +171,7 @@ def render_sidebar_menu(username: str):
         ("📂", "Categories", "📂 Categories"),
         ("📊", "Dashboard", "📊 Dashboard"),
         ("🤖", "AI Prediction", "🤖 AI Prediction"),
-        ("⚠️", "Expiry Alerts", "⚠ Expiry Alerts"),
+        ("⚠️", "Expiry Alerts", "⚠️ Expiry Alerts"),
         ("🍲", "Recipe Suggestions", "🍲 Recipe Suggestions"),
         ("📈", "Analytics", "📈 Analytics"),
         ("🌍", "Sustainability", "🌍 Sustainability"),
@@ -230,15 +201,12 @@ def render_sidebar_menu(username: str):
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-
 # DASHBOARD CONTENT
 def show_dashboard(username):
     df = load_data()
-
     render_sidebar_menu(username)
     mode = st.session_state.active_menu
 
-    # HOME
     if mode == "🏠 Home":
         st.markdown("""
         <div class="banner">
@@ -285,7 +253,6 @@ def show_dashboard(username):
                     f"**Days Left:** {row['Time_To_Expiry']}"
                 )
 
-    # ADD FOOD
     elif mode == "➕ Add Food":
         st.subheader("➕ Add New Food")
 
@@ -315,17 +282,14 @@ def show_dashboard(username):
             st.success("✅ Food Added Successfully!")
             st.balloons()
 
-    # CATEGORIES
     elif mode == "📂 Categories":
         st.subheader("📂 Food Categories")
         st.dataframe(df[["Food_Name", "Category"]], use_container_width=True)
 
-    # DASHBOARD
     elif mode == "📊 Dashboard":
         st.subheader("📊 Full Food Dashboard")
         st.dataframe(df, use_container_width=True)
 
-    # AI PREDICTION (simple score)
     elif mode == "🤖 AI Prediction":
         st.subheader("🤖 AI Freshness Prediction")
         if len(df) > 0:
@@ -337,8 +301,7 @@ def show_dashboard(username):
         else:
             st.info("No data available. Add food first.")
 
-    # EXPIRY ALERTS
-    elif mode == "⚠ Expiry Alerts":
+    elif mode == "⚠️ Expiry Alerts":
         st.subheader("⚠ Expiry Alerts")
         found = False
         for _, row in df.iterrows():
@@ -351,7 +314,6 @@ def show_dashboard(username):
         if not found:
             st.success("✅ No expiry alerts")
 
-    # RECIPES
     elif mode == "🍲 Recipe Suggestions":
         st.subheader("🍲 Recipe Suggestions")
         st.info("""
@@ -361,10 +323,13 @@ def show_dashboard(username):
 🥚 Egg → Omelette
 """)
 
-    # ANALYTICS
     elif mode == "📈 Analytics":
         st.subheader("📈 Food Analytics Dashboard")
         if len(df) > 0:
+            if px is None:
+                st.error("plotly is not available. Add it to requirements.txt and redeploy.")
+                return
+
             fig = px.bar(
                 df,
                 x="Food_Name",
@@ -383,7 +348,6 @@ def show_dashboard(username):
         else:
             st.info("No data available")
 
-    # SUSTAINABILITY
     elif mode == "🌍 Sustainability":
         st.subheader("🌍 FreshTrack Sustainability Score")
 
@@ -410,7 +374,6 @@ def show_dashboard(username):
         else:
             st.warning(f"Earn {100 - points} more points to unlock Green Hero Badge")
 
-    # REWARDS
     elif mode == "🏆 Rewards":
         st.subheader("🏆 FreshTrack Rewards")
         rewards = len(df) * 10
@@ -419,14 +382,12 @@ def show_dashboard(username):
         st.progress(min(rewards / 500, 1.0))
         st.info("🎁 500 Points = Premium Badge")
 
-    # PROFILE
     elif mode == "👤 Profile":
         st.subheader("👤 User Profile")
         st.write("Username:", username)
         st.write("Foods Added:", len(df))
         st.write("Categories Used:", df["Category"].nunique() if len(df) > 0 else 0)
         st.write("FreshTrack Points:", len(df) * 10)
-
 
 # MAIN APP
 if st.session_state.logged_in:
@@ -456,7 +417,7 @@ else:
                 st.success("Account Created")
                 st.session_state.logged_in = True
                 st.session_state.username = new_user
-                st.rerun()
+                                st.rerun()
             else:
                 st.error("Username Already Exists")
 
@@ -477,16 +438,12 @@ else:
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
 
-       
+        if st.button("Login"):
+            ok = login_user(username, password)
 
-if st.button("Login"):
-    st.write("Trying login with:", repr(username))
-    ok = login_user(username, password)
-    st.write("login_user returned:", ok)
-
-    if ok:
-        st.session_state.logged_in = True
-        st.session_state.username = username
-        st.rerun()
-    else:
-        st.error("Invalid Username or Password")
+            if ok:
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.rerun()
+            else:
+                st.error("Invalid Username or Password")
