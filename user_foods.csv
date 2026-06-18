@@ -1,8 +1,11 @@
-Food_Name,Time_To_Expiry
-Milk,7
-Milk,7
-,7
-Egg,5
-Egg,0
-Milk,0
-Milk,0
+Food_Name,Category,Time_To_Expiry
+Milk,Dairy,2
+Apple,Fruit,5
+Bread,Bakery,3
+Banana,Fruit,4
+Egg,Protein,7
+Tomato,Vegetable,2
+Yogurt,Dairy,5
+Milk,Dairy,0
+Mango,Others,1
+chicken fried rice,Others,1
