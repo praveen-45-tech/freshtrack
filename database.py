@@ -1,3 +1,5 @@
+
+
 import sqlite3
 
 def create_table():
@@ -22,7 +24,7 @@ def add_user(username, password):
     try:
         c.execute(
             "INSERT INTO users VALUES (?, ?)",
-            (username, password)
+            (username.strip(), password.strip())
         )
         conn.commit()
         return True
@@ -40,11 +42,10 @@ def login_user(username, password):
 
     c.execute(
         "SELECT * FROM users WHERE username=? AND password=?",
-        (username, password)
+        (username.strip(), password.strip())
     )
 
     data = c.fetchone()
-
     conn.close()
 
-    return data
+    return data is not None
