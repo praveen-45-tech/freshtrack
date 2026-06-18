@@ -477,11 +477,15 @@ else:
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
 
-        if st.button("Login"):
-            if login_user(username, password):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.rerun()
-            else:
-                st.error("Invalid Username or Password")
-            
+       
+if st.button("Login"):
+    st.write("Trying login with:", repr(username))
+    ok = login_user(username, password)
+    st.write("login_user returned:", ok)
+
+    if ok:
+        st.session_state.logged_in = True
+        st.session_state.username = username
+        st.rerun()
+    else:
+        st.error("Invalid Username or Password")
