@@ -460,7 +460,7 @@ else:
             else:
                 st.error("Username Already Exists")
 
-    else:
+    else:  # Login
         st.markdown("""
         <div style="
         background:white;
