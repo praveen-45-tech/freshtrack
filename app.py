@@ -417,7 +417,7 @@ else:
                 st.success("Account Created")
                 st.session_state.logged_in = True
                 st.session_state.username = new_user
-                                st.rerun()
+                st.rerun()
             else:
                 st.error("Username Already Exists")
 
