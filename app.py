@@ -7,53 +7,47 @@ try:
 except ModuleNotFoundError:
     px = None
 
-st.write("DEBUG users.db path =", os.path.abspath("users.db"))
-from database import *
-
-create_table()
-
 st.set_page_config(
     page_title="FreshTrack",
     page_icon="🥗",
     layout="wide"
 )
 
-# SESSION STATE
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-if "username" not in st.session_state:
-    st.session_state.username = ""
-
-if "active_menu" not in st.session_state:
-    st.session_state.active_menu = "🏠 Home"
-
-# PAGE HEADER
-st.markdown("""
-<div style="text-align:center; padding:20px;">
-<h1 style="color:#2E7D32; font-size:60px; font-weight:bold;">🥗 FreshTrack</h1>
-<h3 style="color:#FF6F00;">AI Smart Food Waste Reduction System</h3>
-<p style="font-size:18px; color:gray;">Track • Save • Sustain • Earn Rewards</p>
-</div>
-""", unsafe_allow_html=True)
-
-# STYLE
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-* { font-family: 'Poppins', sans-serif !important; }
-.stApp{ background: linear-gradient(135deg, #F4FFF4, #E8F5E9) !important; }
-[data-testid="stSidebar"]{
-    background: linear-gradient(180deg, #1B5E20 0%, #2E7D32 50%, #1B5E20 100%) !important;
+
+html, body, .stApp {
+    font-family: 'Poppins', sans-serif !important;
+    background: #F7F9FC !important;
+    color: #111827 !important;
+}
+
+h1, h2, h3, h4, h5, h6, p, div, span, label {
+    color: #111827 !important;
+}
+
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0F3D1E 0%, #1B5E20 50%, #0F3D1E 100%) !important;
     border-right: none !important;
     box-shadow: 4px 0px 20px rgba(0,0,0,0.25) !important;
 }
+
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,
-[data-testid="stSidebar"] label { color: white !important; }
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] div,
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] h4,
+[data-testid="stSidebar"] h5,
+[data-testid="stSidebar"] h6 {
+    color: white !important;
+}
 
-.user-card{
-    background: rgba(255,255,255,0.15);
+.user-card {
+    background: rgba(255,255,255,0.14);
     backdrop-filter: blur(10px);
     padding: 20px 15px;
     border-radius: 20px;
@@ -63,8 +57,8 @@ st.markdown("""
     text-align: center;
 }
 
-.menu-section-title{
-    color: rgba(255,255,255,0.65) !important;
+.menu-section-title {
+    color: rgba(255,255,255,0.75) !important;
     font-size: 11px !important;
     font-weight: 800 !important;
     letter-spacing: 2px !important;
@@ -73,20 +67,20 @@ st.markdown("""
     padding-left: 8px !important;
 }
 
-.menu-divider{
+.menu-divider {
     height: 1px;
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.18);
     margin: 10px 10px;
     border-radius: 5px;
 }
 
-.stButton button{
+.stButton button {
     width: 100%;
     border-radius: 16px !important;
     height: 48px !important;
     border: none !important;
     background: transparent !important;
-    color: rgba(255,255,255,0.88) !important;
+    color: rgba(255,255,255,0.95) !important;
     font-weight: 650 !important;
     font-size: 15px !important;
     padding: 0px 14px !important;
@@ -95,13 +89,13 @@ st.markdown("""
     box-shadow: none !important;
 }
 
-.stButton button:hover{
+.stButton button:hover {
     background: rgba(255,255,255,0.18) !important;
     color: white !important;
     transform: translateX(5px);
 }
 
-.active-menu button{
+.active-menu button {
     background: linear-gradient(135deg, rgba(255,255,255,0.30), rgba(255,255,255,0.10)) !important;
     border: 1px solid rgba(255,255,255,0.35) !important;
     color: white !important;
@@ -110,7 +104,7 @@ st.markdown("""
     transform: translateX(5px);
 }
 
-.logout-btn button{
+.logout-btn button {
     background: linear-gradient(135deg, #FF5252, #D32F2F) !important;
     color: white !important;
     font-weight: 800 !important;
@@ -118,38 +112,80 @@ st.markdown("""
     border: none !important;
 }
 
-.logout-btn button:hover{
+.logout-btn button:hover {
     background: linear-gradient(135deg, #FF6B6B, #C62828) !important;
     transform: scale(1.01);
 }
 
-.banner{
+.banner {
     background: linear-gradient(135deg, #00C853, #64DD17);
     padding: 35px;
     border-radius: 25px;
-    color: white;
+    color: white !important;
     box-shadow: 0px 10px 25px rgba(0,0,0,0.15);
     margin-bottom: 20px;
 }
 
+.banner h1, .banner p {
+    color: white !important;
+}
+
 .stTextInput input,
-.stSelectbox select{ border-radius: 15px !important; border: 2px solid #E8F5E9 !important; }
-[data-testid="stDataFrame"]{ border-radius: 15px !important; }
-.stButton button:focus{ box-shadow: none !important; }
+.stSelectbox div,
+.stDateInput input,
+textarea {
+    background-color: #FFFFFF !important;
+    color: #111827 !important;
+    border: 2px solid #CBD5E1 !important;
+    border-radius: 15px !important;
+}
+
+.stTextInput label,
+.stSelectbox label,
+.stDateInput label {
+    color: #111827 !important;
+    font-weight: 600 !important;
+}
+
+[data-testid="stDataFrame"] {
+    border-radius: 15px !important;
+}
+
+.stForm {
+    background: #FFFFFF !important;
+    padding: 18px !important;
+    border-radius: 18px !important;
+    border: 1px solid #E5E7EB !important;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.06) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# DATA
+from database import *
+
+create_table()
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if "username" not in st.session_state:
+    st.session_state.username = ""
+
+if "active_menu" not in st.session_state:
+    st.session_state.active_menu = "🏠 Home"
+
+
 def load_data():
     try:
         return pd.read_csv("user_foods.csv")
     except Exception:
         return pd.DataFrame(columns=["Food_Name", "Category", "Time_To_Expiry"])
 
+
 def save_data(df):
     df.to_csv("user_foods.csv", index=False)
 
-# SIDEBAR MENU
+
 def render_sidebar_menu(username: str):
     st.sidebar.markdown(f"""
     <div class="user-card">
@@ -183,25 +219,21 @@ def render_sidebar_menu(username: str):
         is_active = st.session_state.active_menu == key
         wrapper_cls = "active-menu" if is_active else ""
         st.sidebar.markdown(f'<div class="{wrapper_cls}">', unsafe_allow_html=True)
-
         if st.sidebar.button(f"{icon}  {label}", key=f"menu_{key}", use_container_width=True):
             st.session_state.active_menu = key
             st.rerun()
-
         st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
     st.sidebar.markdown('<div class="menu-divider"></div>', unsafe_allow_html=True)
 
-    logout_wrap = st.sidebar.container()
-    with logout_wrap:
-        st.markdown('<div class="logout-btn">', unsafe_allow_html=True)
-        if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.active_menu = "🏠 Home"
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="logout-btn">', unsafe_allow_html=True)
+    if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
+        st.session_state.logged_in = False
+        st.session_state.active_menu = "🏠 Home"
+        st.rerun()
+    st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
-# DASHBOARD CONTENT
+
 def show_dashboard(username):
     df = load_data()
     render_sidebar_menu(username)
@@ -226,25 +258,20 @@ def show_dashboard(username):
             else:
                 st.error("❌ Food Not Found")
 
-        st.markdown("<br>", unsafe_allow_html=True)
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("🍎 Total Foods", len(df))
         c2.metric("📂 Categories", df["Category"].nunique() if len(df) > 0 else 0)
         c3.metric("⚠ Expiring Soon", len(df[df["Time_To_Expiry"] <= 3]) if len(df) > 0 else 0)
         c4.metric("✅ Fresh Foods", len(df[df["Time_To_Expiry"] > 3]) if len(df) > 0 else 0)
 
-        st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("📂 Quick Categories")
-
         cats = ["Dairy", "Fruit", "Vegetable", "Bakery"]
         cols = st.columns(4)
         for i, cat in enumerate(cats):
             if cols[i].button(cat, key=f"cat_{cat}"):
                 st.dataframe(df[df["Category"] == cat], use_container_width=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("🔥 All Foods")
-
         for i, row in df.iterrows():
             if st.button(f"🍽 {row['Food_Name']}", key=f"food_{i}"):
                 st.info(
@@ -255,19 +282,10 @@ def show_dashboard(username):
 
     elif mode == "➕ Add Food":
         st.subheader("➕ Add New Food")
-
-        food_option = st.selectbox(
-            "Select Food",
-            ["Milk", "Apple", "Banana", "Bread", "Egg", "Tomato", "Others"]
-        )
+        food_option = st.selectbox("Select Food", ["Milk", "Apple", "Banana", "Bread", "Egg", "Tomato", "Others"])
         food = st.text_input("Enter Food Name") if food_option == "Others" else food_option
-
-        category_option = st.selectbox(
-            "Select Category",
-            ["Dairy", "Fruit", "Vegetable", "Bakery", "Protein", "Beverage", "Others"]
-        )
-        Category = st.text_input("Enter Category Name") if category_option == "Others" else category_option
-
+        category_option = st.selectbox("Select Category", ["Dairy", "Fruit", "Vegetable", "Bakery", "Protein", "Beverage", "Others"])
+        category = st.text_input("Enter Category Name") if category_option == "Others" else category_option
         added_date = st.date_input("📅 Added Date")
         expiry_date = st.date_input("📅 Expiry Date")
 
@@ -275,7 +293,7 @@ def show_dashboard(username):
             days = (expiry_date - added_date).days
             df.loc[len(df)] = {
                 "Food_Name": food,
-                "Category": Category,
+                "Category": category,
                 "Time_To_Expiry": days
             }
             save_data(df)
@@ -295,7 +313,7 @@ def show_dashboard(username):
         if len(df) > 0:
             food = st.selectbox("Select Food", df["Food_Name"])
             days = int(df[df["Food_Name"] == food]["Time_To_Expiry"].values[0])
-            score = min(100, int((days / 30) * 100))
+            score = min(100, max(0, int((days / 30) * 100)))
             st.metric("Freshness Score", f"{score}%")
             st.progress(score / 100)
         else:
@@ -330,27 +348,16 @@ def show_dashboard(username):
                 st.error("plotly is not available. Add it to requirements.txt and redeploy.")
                 return
 
-            fig = px.bar(
-                df,
-                x="Food_Name",
-                y="Time_To_Expiry",
-                color="Category",
-                title="Food Expiry Analysis"
-            )
+            fig = px.bar(df, x="Food_Name", y="Time_To_Expiry", color="Category", title="Food Expiry Analysis")
             st.plotly_chart(fig, use_container_width=True)
 
-            fig2 = px.pie(
-                df,
-                names="Category",
-                title="Food Category Distribution"
-            )
+            fig2 = px.pie(df, names="Category", title="Food Category Distribution")
             st.plotly_chart(fig2, use_container_width=True)
         else:
             st.info("No data available")
 
     elif mode == "🌍 Sustainability":
         st.subheader("🌍 FreshTrack Sustainability Score")
-
         foods_saved = len(df)
         fresh_foods = len(df[df["Time_To_Expiry"] > 3])
         points = foods_saved * 5 + fresh_foods * 10
@@ -389,26 +396,25 @@ def show_dashboard(username):
         st.write("Categories Used:", df["Category"].nunique() if len(df) > 0 else 0)
         st.write("FreshTrack Points:", len(df) * 10)
 
-# MAIN APP
-# MAIN APP
+
 if st.session_state.logged_in:
     show_dashboard(st.session_state.username)
 else:
     choice = st.sidebar.selectbox("Menu", ["Login", "Register"])
 
-    st.markdown("### ")
-
     if choice == "Register":
         st.markdown("""
         <div style="
-        background:white;
+        background:#FFFFFF;
+        color:#111827;
         padding:25px;
         border-radius:20px;
-        box-shadow:0px 5px 15px rgba(0,0,0,0.1);
+        box-shadow:0px 5px 15px rgba(0,0,0,0.08);
         text-align:center;
+        border:1px solid #E5E7EB;
         ">
-        <h2>📝 Create FreshTrack Account</h2>
-        <p>Start saving food and earn rewards</p>
+        <h2 style="color:#111827;">📝 Create FreshTrack Account</h2>
+        <p style="color:#374151;">Start saving food and earn rewards</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -429,14 +435,16 @@ else:
     else:
         st.markdown("""
         <div style="
-        background:white;
+        background:#FFFFFF;
+        color:#111827;
         padding:25px;
         border-radius:20px;
-        box-shadow:0px 5px 15px rgba(0,0,0,0.1);
+        box-shadow:0px 5px 15px rgba(0,0,0,0.08);
         text-align:center;
+        border:1px solid #E5E7EB;
         ">
-        <h2>🔐 Login to FreshTrack</h2>
-        <p>Manage your foods and reduce waste smartly</p>
+        <h2 style="color:#111827;">🔐 Login to FreshTrack</h2>
+        <p style="color:#374151;">Manage your foods and reduce waste smartly</p>
         </div>
         """, unsafe_allow_html=True)
 
