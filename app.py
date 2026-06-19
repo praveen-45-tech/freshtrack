@@ -8,8 +8,8 @@ import json
 def send_expiry_email(receiver_email, food_name, days):
 
     try:
-        sender_email = os.environ.get("FRESHTRACK_EMAIL")
-        sender_app_password = os.environ.get("FRESHTRACK_APP_PASSWORD")
+        sender_email = st.secrets.get("FRESHTRACK_EMAIL", os.environ.get("FRESHTRACK_EMAIL"))
+        sender_app_password = st.secrets.get("FRESHTRACK_APP_PASSWORD", os.environ.get("FRESHTRACK_APP_PASSWORD"))
 
         if not sender_email or not sender_app_password:
             print("Email credentials not set. Set FRESHTRACK_EMAIL and FRESHTRACK_APP_PASSWORD environment variables.")
