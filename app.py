@@ -1,6 +1,49 @@
 import streamlit as st
 import pandas as pd
 import os
+import yagmail
+import json
+
+
+def send_expiry_email(receiver_email, food_name, days):
+
+    try:
+        sender_email = os.environ.get("FRESHTRACK_EMAIL")
+        sender_app_password = os.environ.get("FRESHTRACK_APP_PASSWORD")
+
+        if not sender_email or not sender_app_password:
+            print("Email credentials not set. Set FRESHTRACK_EMAIL and FRESHTRACK_APP_PASSWORD environment variables.")
+            return False
+
+        yag = yagmail.SMTP(
+            sender_email,
+            sender_app_password
+        )
+
+        subject = "FreshTrack Expiry Alert"
+
+        body = f"""
+Hello,
+
+Your food item "{food_name}" will expire in {days} day(s).
+
+Please consume it soon to reduce food waste.
+
+FreshTrack Team 🌱
+"""
+
+        yag.send(
+            to=receiver_email,
+            subject=subject,
+            contents=body
+        )
+
+        return True
+
+    except Exception as e:
+        print(e)
+        return False
+
 
 try:
     import plotly.express as px
@@ -165,6 +208,17 @@ from database import *
 
 create_table()
 
+LOGIN_FILE = "login.json"
+
+if os.path.exists(LOGIN_FILE):
+    try:
+        with open(LOGIN_FILE, "r") as f:
+            data = json.load(f)
+            st.session_state.logged_in = True
+            st.session_state.username = data["username"]
+    except:
+        pass
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -175,15 +229,23 @@ if "active_menu" not in st.session_state:
     st.session_state.active_menu = "🏠 Home"
 
 
-def load_data():
+def get_user_file(username):
+    return f"{username}_foods.csv"
+
+
+def load_data(username):
+    file_name = get_user_file(username)
     try:
-        return pd.read_csv("user_foods.csv")
-    except Exception:
-        return pd.DataFrame(columns=["Food_Name", "Category", "Time_To_Expiry"])
+        return pd.read_csv(file_name)
+    except:
+        return pd.DataFrame(
+            columns=["Food_Name", "Category", "Time_To_Expiry"]
+        )
 
 
-def save_data(df):
-    df.to_csv("user_foods.csv", index=False)
+def save_data(df, username):
+    file_name = get_user_file(username)
+    df.to_csv(file_name, index=False)
 
 
 def render_sidebar_menu(username: str):
@@ -225,17 +287,21 @@ def render_sidebar_menu(username: str):
         st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
     st.sidebar.markdown('<div class="menu-divider"></div>', unsafe_allow_html=True)
-
     st.sidebar.markdown('<div class="logout-btn">', unsafe_allow_html=True)
+
     if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True):
         st.session_state.logged_in = False
+        st.session_state.username = ""
         st.session_state.active_menu = "🏠 Home"
+        if os.path.exists(LOGIN_FILE):
+            os.remove(LOGIN_FILE)
         st.rerun()
+
     st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 
 def show_dashboard(username):
-    df = load_data()
+    df = load_data(username)
     render_sidebar_menu(username)
     mode = st.session_state.active_menu
 
@@ -291,14 +357,19 @@ def show_dashboard(username):
 
         if st.button("💾 Save Food"):
             days = (expiry_date - added_date).days
-            df.loc[len(df)] = {
-                "Food_Name": food,
-                "Category": category,
-                "Time_To_Expiry": days
-            }
-            save_data(df)
-            st.success("✅ Food Added Successfully!")
-            st.balloons()
+            duplicate = df[df["Food_Name"].str.lower() == food.lower()]
+
+            if len(duplicate) > 0:
+                st.error("❌ Food already exists! Please enter a different food.")
+            else:
+                df.loc[len(df)] = {
+                    "Food_Name": food,
+                    "Category": category,
+                    "Time_To_Expiry": days
+                }
+                save_data(df, username)
+                st.success("✅ Food Added Successfully!")
+                st.balloons()
 
     elif mode == "📂 Categories":
         st.subheader("📂 Food Categories")
@@ -325,19 +396,31 @@ def show_dashboard(username):
         for _, row in df.iterrows():
             if row["Time_To_Expiry"] <= 1:
                 found = True
-                st.error(f"🚨 {row['Food_Name']} expires tomorrow")
+                st.toast(f"🚨 {row['Food_Name']} expires tomorrow")
             elif row["Time_To_Expiry"] <= 3:
                 found = True
-                st.warning(f"⚠ {row['Food_Name']} expires soon")
+                email = get_email(username)
+
+                if email:
+                    send_expiry_email(
+                        email,
+                        row["Food_Name"],
+                        row["Time_To_Expiry"]
+                    )
+
+                st.warning(
+                    f"{row['Food_Name']} expires soon"
+                )
+
         if not found:
             st.success("✅ No expiry alerts")
 
     elif mode == "🍲 Recipe Suggestions":
         st.subheader("🍲 Recipe Suggestions")
         st.info("""
-🥛 Milk → Milkshake  
-🍎 Apple → Apple Pie  
-🍞 Bread → Sandwich  
+🥛 Milk → Milkshake
+🍎 Apple → Apple Pie
+🍞 Bread → Sandwich
 🥚 Egg → Omelette
 """)
 
@@ -346,13 +429,22 @@ def show_dashboard(username):
         if len(df) > 0:
             if px is None:
                 st.error("plotly is not available. Add it to requirements.txt and redeploy.")
-                return
+            else:
+                fig = px.bar(
+                    df,
+                    x="Food_Name",
+                    y="Time_To_Expiry",
+                    color="Category",
+                    title="Food Expiry Analysis"
+                )
+                st.plotly_chart(fig, use_container_width=True)
 
-            fig = px.bar(df, x="Food_Name", y="Time_To_Expiry", color="Category", title="Food Expiry Analysis")
-            st.plotly_chart(fig, use_container_width=True)
-
-            fig2 = px.pie(df, names="Category", title="Food Category Distribution")
-            st.plotly_chart(fig2, use_container_width=True)
+                fig2 = px.pie(
+                    df,
+                    names="Category",
+                    title="Food Category Distribution"
+                )
+                st.plotly_chart(fig2, use_container_width=True)
         else:
             st.info("No data available")
 
@@ -383,7 +475,9 @@ def show_dashboard(username):
 
     elif mode == "🏆 Rewards":
         st.subheader("🏆 FreshTrack Rewards")
-        rewards = len(df) * 10
+        fresh_foods = len(df[df["Time_To_Expiry"] > 3])
+        rewards = fresh_foods * 20
+
         st.metric("FreshTrack Points", rewards)
         st.success(f"You earned {rewards} points for saving food!")
         st.progress(min(rewards / 500, 1.0))
@@ -420,17 +514,22 @@ else:
 
         with st.form("register_form"):
             new_user = st.text_input("Username")
+            email = st.text_input("Email")
             new_password = st.text_input("Password", type="password")
             submitted = st.form_submit_button("Register")
 
             if submitted:
-                if add_user(new_user, new_password):
-                    st.success("Account Created")
+                if add_user(new_user, new_password, email):
+                    st.success("✅ Account Created Successfully!")
                     st.session_state.logged_in = True
                     st.session_state.username = new_user
+
+                    with open(LOGIN_FILE, "w") as f:
+                        json.dump({"username": new_user}, f)
+
                     st.rerun()
                 else:
-                    st.error("Username Already Exists")
+                    st.error("❌ Username Already Exists")
 
     else:
         st.markdown("""
@@ -458,6 +557,10 @@ else:
                 if ok:
                     st.session_state.logged_in = True
                     st.session_state.username = username
+
+                    with open(LOGIN_FILE, "w") as f:
+                        json.dump({"username": username}, f)
+
                     st.rerun()
                 else:
-                    st.error("Invalid Username or Password")
+                    st.error("❌ Invalid Username or Password")
