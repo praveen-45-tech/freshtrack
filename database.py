@@ -1,9 +1,14 @@
-import sqlite3
+import psycopg2
+import streamlit as st
+
+
+def get_connection():
+    return psycopg2.connect(st.secrets["DB_URL"])
 
 
 def create_table():
 
-    conn = sqlite3.connect("users.db")
+    conn = get_connection()
     c = conn.cursor()
 
     c.execute("""
@@ -15,12 +20,13 @@ def create_table():
     """)
 
     conn.commit()
+    c.close()
     conn.close()
 
 
 def add_user(username, password, email):
 
-    conn = sqlite3.connect("users.db")
+    conn = get_connection()
     c = conn.cursor()
 
     try:
@@ -28,18 +34,21 @@ def add_user(username, password, email):
         c.execute(
             """
             INSERT INTO users(username,password,email)
-            VALUES(?,?,?)
+            VALUES(%s,%s,%s)
             """,
             (username, password, email)
         )
 
         conn.commit()
+        c.close()
         conn.close()
 
         return True
 
-    except sqlite3.IntegrityError:
+    except psycopg2.errors.UniqueViolation:
 
+        conn.rollback()
+        c.close()
         conn.close()
 
         return False
@@ -47,20 +56,21 @@ def add_user(username, password, email):
 
 def login_user(username, password):
 
-    conn = sqlite3.connect("users.db")
+    conn = get_connection()
     c = conn.cursor()
 
     c.execute(
         """
         SELECT *
         FROM users
-        WHERE username=? AND password=?
+        WHERE username=%s AND password=%s
         """,
         (username, password)
     )
 
     data = c.fetchone()
 
+    c.close()
     conn.close()
 
     return data is not None
@@ -68,20 +78,21 @@ def login_user(username, password):
 
 def get_email(username):
 
-    conn = sqlite3.connect("users.db")
+    conn = get_connection()
     c = conn.cursor()
 
     c.execute(
         """
         SELECT email
         FROM users
-        WHERE username=?
+        WHERE username=%s
         """,
         (username,)
     )
 
     data = c.fetchone()
 
+    c.close()
     conn.close()
 
     if data:
@@ -92,20 +103,21 @@ def get_email(username):
 
 def user_exists(username):
 
-    conn = sqlite3.connect("users.db")
+    conn = get_connection()
     c = conn.cursor()
 
     c.execute(
         """
         SELECT username
         FROM users
-        WHERE username=?
+        WHERE username=%s
         """,
         (username,)
     )
 
     data = c.fetchone()
 
+    c.close()
     conn.close()
 
     return data is not None
@@ -113,7 +125,7 @@ def user_exists(username):
 
 def get_all_users():
 
-    conn = sqlite3.connect("users.db")
+    conn = get_connection()
     c = conn.cursor()
 
     c.execute(
@@ -125,6 +137,7 @@ def get_all_users():
 
     data = c.fetchall()
 
+    c.close()
     conn.close()
 
     return data
@@ -132,16 +145,17 @@ def get_all_users():
 
 def delete_user(username):
 
-    conn = sqlite3.connect("users.db")
+    conn = get_connection()
     c = conn.cursor()
 
     c.execute(
         """
         DELETE FROM users
-        WHERE username=?
+        WHERE username=%s
         """,
         (username,)
     )
 
     conn.commit()
+    c.close()
     conn.close()
